@@ -1,6 +1,5 @@
 import csv
 import time
-import datetime
 from tkinter import *  # Normal Tkinter.* widgets are not themed!
 from ttkthemes import ThemedTk, ThemedStyle
 from tkinter import ttk
@@ -226,14 +225,16 @@ class SSN_Server_UI():
                 self.configs.append(this_sensor_rating)
                 self.configs.append(int(10*float(self.machine_thresholds[i].get())))
                 self.configs.append(int(self.machine_maxloads[i].get()))
+                self.configs.append(0)  # this is the sensor scalar set to 1.00V for the blue current sensors
                 pass
+            # append max-min temperature and humidity thresholds
+            self.configs.extend([0, 100, 0, 100])
             self.configs.append(int(self.reportinterval_text_entry.get()))
             try:
                 self.udp_comm.send_set_config_message(node_index=self.node_select_radio_button.getSelectedNode()-1, config=self.configs)
                 print('\033[34m' + "Sent CONFIG to SSN-{}".format(self.node_select_radio_button.getSelectedNode()))
             except IndexError:
-                print('\033[31m' + "SSN Network Node Count: {}. Can't Send to SSN Indexed: {}".format(self.udp_comm.getNodeCountinNetwork(),
-                                                                                                      self.node_select_radio_button.getSelectedNode() - 1))
+                print('\033[31m' + "SSN Network Node Count: {}. Can't Send to SSN Indexed: {}".format(self.udp_comm.getNodeCountinNetwork(), self.node_select_radio_button.getSelectedNode() - 1))
             # change button color
             # self.config_button.config(bg='white')
         pass
@@ -300,30 +301,31 @@ class SSN_Server_UI():
         return (self.NodeCountInGUI - 1) * vertical_spacing * 14 + 40
 
     def setup_incoming_data_interface(self, NumOfNodes):
+        x_size = 120
         for k in range(NumOfNodes):
             self.NodeCountInGUI += 1
             # received message/status to be displayed
             self.message_type_text.append(SSN_Text_Display_Widget(window=self.root_window, label_text="Incoming Message Type", label_pos=(0, self.GUI_Block() + vertical_spacing*6),
-                                                                  text_size=(110, vertical_spacing), text_pos=(horizontal_spacing+20, self.GUI_Block() + vertical_spacing*6)))
+                                                                  text_size=(x_size, vertical_spacing), text_pos=(horizontal_spacing+20, self.GUI_Block() + vertical_spacing*6)))
             # add a radio-button to chose this one when we have to send the message
             self.node_select_radio_button.add_radio(radio_text="SSN-{}".format(self.NodeCountInGUI), radio_value=self.NodeCountInGUI,
                                                     radio_pos=(2*horizontal_spacing+20, self.GUI_Block() + vertical_spacing*6))
             # SSN Node ID to be displayed
             self.nodeid_text.append(SSN_Text_Display_Widget(window=self.root_window, label_text="Node ID", label_pos=(0, self.GUI_Block() + vertical_spacing * 7),
-                                                            text_size=(110, vertical_spacing), text_pos=(horizontal_spacing + 20, self.GUI_Block() + vertical_spacing * 7)))
+                                                            text_size=(x_size+20, vertical_spacing), text_pos=(horizontal_spacing + 20, self.GUI_Block() + vertical_spacing * 7)))
             # temperature to be displayed
             self.temperature_text.append(SSN_Text_Display_Widget(window=self.root_window, label_text="Temperature ({}C)".format(chr(176)),
-                                                                 label_pos=(0, self.GUI_Block() + vertical_spacing*8), text_size=(110, vertical_spacing),
+                                                                 label_pos=(0, self.GUI_Block() + vertical_spacing*8), text_size=(x_size, vertical_spacing),
                                                                  text_pos=(horizontal_spacing+20, self.GUI_Block() + vertical_spacing*8)))
             # humidity to be displayed
             self.humidity_text.append(SSN_Text_Display_Widget(window=self.root_window, label_text="Relative Humidity (%)", label_pos=(0, self.GUI_Block() + vertical_spacing*9),
-                                                              text_size=(110, vertical_spacing), text_pos=(horizontal_spacing+20, self.GUI_Block() + vertical_spacing*9)))
+                                                              text_size=(x_size, vertical_spacing), text_pos=(horizontal_spacing+20, self.GUI_Block() + vertical_spacing*9)))
             # node uptime to be displayed
             self.nodeuptime_text.append(SSN_Text_Display_Widget(window=self.root_window, label_text="Node Up Time in (sec)", label_pos=(0, self.GUI_Block() + vertical_spacing * 10),
-                                                                text_size=(110, vertical_spacing), text_pos=(horizontal_spacing + 20, self.GUI_Block() + vertical_spacing * 10)))
+                                                                text_size=(x_size, vertical_spacing), text_pos=(horizontal_spacing + 20, self.GUI_Block() + vertical_spacing * 10)))
             # abnormal activity to be displayed
             self.abnormalactivity_text.append(SSN_Text_Display_Widget(window=self.root_window, label_text="Abnormal Activity", label_pos=(0, self.GUI_Block() + vertical_spacing * 11),
-                                                                      text_size=(110, vertical_spacing), text_pos=(horizontal_spacing + 20, self.GUI_Block() + vertical_spacing * 11),
+                                                                      text_size=(x_size, vertical_spacing), text_pos=(horizontal_spacing + 20, self.GUI_Block() + vertical_spacing * 11),
                                                                       color='green'))
 
             for i in range(4):
@@ -415,12 +417,10 @@ class SSN_Server_UI():
                 print('\033[34m' + "Received GET_TIMEOFDAY from SSN-{}".format(node_index+1))
                 # automate set time of day
                 print('\033[34m' + "Sending SET_TIMEOFDAY to SSN-{}".format(node_index+1))
-                self.udp_comm.send_set_timeofday_Tick_message(node_index=self.node_select_radio_button.getSelectedNode() - 1,
-                                                              current_tick=utils.get_bytes_from_int(self.servertimeofday_Tick))
-                print('\033[34m' + "Sent Time of Day to SSN-{}".format(self.node_select_radio_button.getSelectedNode()))
+                self.udp_comm.send_set_timeofday_Tick_message(node_index=node_index, current_tick=utils.get_bytes_from_int(self.servertimeofday_Tick))
+                print('\033[34m' + "Sent Time of Day to SSN-{}".format(node_index+1))
             elif message_id == SSN_MessageType_to_ID['GET_CONFIG']:
                 print('\033[34m' + "Received GET_CONFIG from SSN-{}".format(node_index+1))
-
             # configs have been acknowledged?
             elif message_id == SSN_MessageType_to_ID['ACK_CONFIG']:
                 configs_acknowledged = params[1]  # it is a list
@@ -459,6 +459,8 @@ class SSN_Server_UI():
                     self.machine_timeinstate[node_index][i].update(new_text_string=params[21+i])
                     self.machine_sincewheninstate[node_index][i].update(new_text_strings=machine_state_timestamps[i])
                     pass
+                # machine state change flag byte
+                machine_state_change_flag = params[25]
                 # append this data to our CSV file
                 if self.csv_data_recording:
                     # insertiontimestamp, node_id, node_uptime, activitylevel,
@@ -469,7 +471,8 @@ class SSN_Server_UI():
                     data_packet = [server_time_of_the_day, params[0], datetime.datetime.fromtimestamp(params[3]), activity_level,
                                    params[1], params[2],
                                    params[5], params[9], params[13], datetime.datetime.fromtimestamp(params[17]), params[21],
-                                   params[6], params[10], params[14], datetime.datetime.fromtimestamp(params[18]), params[22]]
+                                   params[6], params[10], params[14], datetime.datetime.fromtimestamp(params[18]), params[22],
+                                   machine_state_change_flag]
                     with open(self.csv_data_file+"-{}-{}-{}".format(server_time_of_the_day.day, server_time_of_the_day.month, server_time_of_the_day.year)+".csv",
                               'a', newline="") as f:
                         writer = csv.writer(f)

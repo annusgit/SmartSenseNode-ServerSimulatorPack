@@ -26,6 +26,7 @@ class UDP_COMM:
     def __init__(self):
         # for multiple nodes
         self.SSN_Network_Address_Mapping = {}
+        self.SSN_Network_Node_names = list()
         self.SSN_Network_Nodes = list()
         self.client_socket = None
         pass
@@ -49,12 +50,10 @@ class UDP_COMM:
         return True
 
     def decipher_node_message(self, node_message=None):
-        # check message
-        # for i in range(len(node_message)):
-        #     print("{}, ".format(node_message[i]), end='')
-        # message id and node id are always present in each message
-        node_message_id = node_message[2]
-        node_id = utils.get_MAC_id_from_bytes(high_byte=node_message[0], low_byte=node_message[1])
+        # node id is in the first six bytes of the message
+        node_id = utils.get_MAC_id_from_bytes(bytes=node_message)
+        # message id is the seventh byte
+        node_message_id = node_message[6]
 
         # GET MAC message is received?
         if node_message_id == SSN_MessageType_to_ID['GET_MAC']:
@@ -67,12 +66,19 @@ class UDP_COMM:
         # acknowledge configurations message is received from the SSN?
         elif node_message_id == SSN_MessageType_to_ID['ACK_CONFIG']:
             configs_received = list()
+            # configurations include sensor rating, max load, threshold current and sensor voltage output
             for i in range(4):
-                configs_received.append(node_message[3+3*i])
-                configs_received.append(node_message[4+3*i])
-                configs_received.append(node_message[5+3*i])
+                configs_received.append(node_message[7+4*i])
+                configs_received.append(node_message[8+4*i])
+                configs_received.append(node_message[9+4*i])
+                configs_received.append(node_message[10+4*i])
                 pass
-            configs_received.append(node_message[15])
+            # configurations include min-max temperature and min-max humidity readings and a report interval
+            configs_received.append(node_message[23])
+            configs_received.append(node_message[24])
+            configs_received.append(node_message[25])
+            configs_received.append(node_message[26])
+            configs_received.append(node_message[27])
             return node_message_id, [node_id, configs_received]
 
         # Get time of day is received from the node?
@@ -82,25 +88,25 @@ class UDP_COMM:
         # Status update is received?
         elif node_message_id == SSN_MessageType_to_ID['STATUS_UPDATE']:
             # get node specific information
-            temperature = utils.get_word_from_bytes(high_byte=node_message[3], low_byte=node_message[4]) / 10.0
-            humidity = utils.get_word_from_bytes(high_byte=node_message[5], low_byte=node_message[6]) / 10.0
-            state_flags = node_message[7]
-            ssn_uptime = utils.get_int_from_bytes(highest_byte=node_message[56], higher_byte=node_message[57], high_byte=node_message[58], low_byte=node_message[59])
-            abnormal_activity = node_message[60]
+            temperature = utils.get_word_from_bytes(high_byte=node_message[7], low_byte=node_message[8]) / 10.0
+            humidity = utils.get_word_from_bytes(high_byte=node_message[9], low_byte=node_message[10]) / 10.0
+            state_flags = node_message[11]
+            ssn_uptime = utils.get_int_from_bytes(highest_byte=node_message[60], higher_byte=node_message[61], high_byte=node_message[62], low_byte=node_message[63])
+            abnormal_activity = node_message[64]
             # get machine specific information
             machine_load_currents, machine_load_percentages, machine_status, machine_state_timestamp, machine_state_duration = list(), list(), list(), list(), list()
             # print(node_message)
             for i in range(4):
-                machine_load_currents.append(utils.get_word_from_bytes(high_byte=node_message[8+i*offset], low_byte=node_message[9+i*offset]) / 100.0)
-                machine_load_percentages.append(node_message[10+i*offset])
-                machine_status.append(node_message[11+i*offset])
-                machine_state_timestamp.append(utils.get_int_from_bytes(highest_byte=node_message[12+i*offset], higher_byte=node_message[13+i*offset],
-                                                                         high_byte=node_message[14+i*offset], low_byte=node_message[15+i*offset]))
-                machine_state_duration.append(utils.get_int_from_bytes(highest_byte=node_message[16+i*offset], higher_byte=node_message[17+i*offset],
-                                                                       high_byte=node_message[18+i*offset], low_byte=node_message[19+i*offset]))
+                machine_load_currents.append(utils.get_word_from_bytes(high_byte=node_message[12+i*offset], low_byte=node_message[13+i*offset]) / 100.0)
+                machine_load_percentages.append(node_message[14+i*offset])
+                machine_status.append(node_message[15+i*offset])
+                machine_state_timestamp.append(utils.get_int_from_bytes(highest_byte=node_message[16+i*offset], higher_byte=node_message[17+i*offset],
+                                                                         high_byte=node_message[18+i*offset], low_byte=node_message[19+i*offset]))
+                machine_state_duration.append(utils.get_int_from_bytes(highest_byte=node_message[20+i*offset], higher_byte=node_message[21+i*offset],
+                                                                       high_byte=node_message[22+i*offset], low_byte=node_message[23+i*offset]))
                 pass
             return node_message_id, [node_id, temperature, humidity, ssn_uptime, abnormal_activity, *machine_load_currents, *machine_load_percentages, *machine_status,
-                                     *machine_state_timestamp, *machine_state_duration]
+                                     *machine_state_timestamp, *machine_state_duration, state_flags]
         return
 
     def read_udp_message(self):
@@ -114,8 +120,10 @@ class UDP_COMM:
         # print(self.node_ip, self.node_port)
         message_id, params = self.decipher_node_message(in_message)
         node_MAC_id = params[0]
+        params[0] = utils.get_MAC_id_string_from_bytes(bytes=node_MAC_id)
         if node_MAC_id not in self.SSN_Network_Address_Mapping:
             self.SSN_Network_Nodes.append(node_MAC_id)
+            self.SSN_Network_Node_names.append(utils.get_MAC_id_string_from_bytes(bytes=node_MAC_id))
             self.SSN_Network_Address_Mapping[node_MAC_id] = (self.node_ip, self.node_port)
             print('\033[32m' + "Added a new SSN into the network.")
             print('\033[32m' + "SSN-{} ({}): {} @ {}".format(len(self.SSN_Network_Address_Mapping), node_MAC_id, self.node_ip, self.node_port))
@@ -138,63 +146,62 @@ class UDP_COMM:
             pass
         pass
 
-    def construct_set_mac_message(self, mac_address):
+    def construct_set_mac_message(self, node_id, mac_address):
         mac_address_in_bytes = get_mac_bytes_from_mac_string(mac_address=mac_address)
-        set_mac_message = [SSN_MessageType_to_ID['SET_MAC'], *mac_address_in_bytes]
+        set_mac_message = [*node_id, SSN_MessageType_to_ID['SET_MAC'], *mac_address_in_bytes]
         return bytearray(set_mac_message)
 
     def send_set_mac_message(self, node_index, mac_address):
-        set_mac_message = self.construct_set_mac_message(mac_address=mac_address)
+        set_mac_message = self.construct_set_mac_message(node_id=self.SSN_Network_Nodes[node_index], mac_address=mac_address)
         self.client_socket.sendto(set_mac_message, self.SSN_Network_Address_Mapping[self.SSN_Network_Nodes[node_index]])
         pass
 
-    def construct_set_timeofday_message(self, current_time):
-        set_timeofday_message = [SSN_MessageType_to_ID['SET_TIMEOFDAY'], int(current_time.hour), int(current_time.minute), int(current_time.second),
+    def construct_set_timeofday_message(self, node_id, current_time):
+        set_timeofday_message = [*node_id, SSN_MessageType_to_ID['SET_TIMEOFDAY'], int(current_time.hour), int(current_time.minute), int(current_time.second),
                                  int(current_time.day), int(current_time.month), int(current_time.year-2000)]
         return bytearray(set_timeofday_message)
 
     def send_set_timeofday_message(self, node_index, current_time):
-        set_timeofday_message = self.construct_set_timeofday_message(current_time=current_time)
+        set_timeofday_message = self.construct_set_timeofday_message(node_id=self.SSN_Network_Nodes[node_index], current_time=current_time)
         self.client_socket.sendto(set_timeofday_message, self.SSN_Network_Address_Mapping[self.SSN_Network_Nodes[node_index]])
         pass
 
-    def construct_set_timeofday_Tick_message(self, current_Tick):
-        set_timeofday_Tick_message = [SSN_MessageType_to_ID['SET_TIMEOFDAY'], current_Tick[0], current_Tick[1], current_Tick[2], current_Tick[3]]
+    def construct_set_timeofday_Tick_message(self, node_id, current_Tick):
+        set_timeofday_Tick_message = [*node_id, SSN_MessageType_to_ID['SET_TIMEOFDAY'], current_Tick[0], current_Tick[1], current_Tick[2], current_Tick[3]]
         return bytearray(set_timeofday_Tick_message)
 
     def send_set_timeofday_Tick_message(self, node_index, current_tick):
-        set_timeofday_message = self.construct_set_timeofday_Tick_message(current_Tick=current_tick)
+        set_timeofday_message = self.construct_set_timeofday_Tick_message(node_id=self.SSN_Network_Nodes[node_index], current_Tick=current_tick)
         self.client_socket.sendto(set_timeofday_message, self.SSN_Network_Address_Mapping[self.SSN_Network_Nodes[node_index]])
         pass
 
-    def construct_set_config_message(self, config):
-        set_config_message = [SSN_MessageType_to_ID['SET_CONFIG'], *config]
+    def construct_set_config_message(self, node_id, config):
+        set_config_message = [*node_id, SSN_MessageType_to_ID['SET_CONFIG'], *config]
         return bytearray(set_config_message)
 
     def send_set_config_message(self, node_index, config):
-        set_config_message = self.construct_set_config_message(config=config)
+        set_config_message = self.construct_set_config_message(node_id=self.SSN_Network_Nodes[node_index], config=config)
         self.client_socket.sendto(set_config_message, self.SSN_Network_Address_Mapping[self.SSN_Network_Nodes[node_index]])
         pass
 
-    def construct_debug_reset_eeprom_message(self):
-        debug_reset_eeprom_message = [SSN_MessageType_to_ID['DEBUG_EEPROM_CLEAR']]
+    def construct_debug_reset_eeprom_message(self, node_id):
+        debug_reset_eeprom_message = [*node_id, SSN_MessageType_to_ID['DEBUG_EEPROM_CLEAR']]
         return bytearray(debug_reset_eeprom_message)
 
     def send_debug_reset_eeprom_message(self, node_index):
-        debug_reset_eeprom_message = self.construct_debug_reset_eeprom_message()
+        debug_reset_eeprom_message = self.construct_debug_reset_eeprom_message(node_id=self.SSN_Network_Nodes[node_index])
         self.client_socket.sendto(debug_reset_eeprom_message, self.SSN_Network_Address_Mapping[self.SSN_Network_Nodes[node_index]])
         pass
 
-    def construct_debug_reset_ssn_message(self):
-        debug_reset_ssn_message = [SSN_MessageType_to_ID['DEBUG_RESET_SSN']]
+    def construct_debug_reset_ssn_message(self, node_id):
+        debug_reset_ssn_message = [*node_id, SSN_MessageType_to_ID['DEBUG_RESET_SSN']]
         return bytearray(debug_reset_ssn_message)
 
     def send_debug_reset_ssn_message(self, node_index):
-        debug_reset_ssn_message = self.construct_debug_reset_ssn_message()
+        debug_reset_ssn_message = self.construct_debug_reset_ssn_message(node_id=self.SSN_Network_Nodes[node_index])
         self.client_socket.sendto(debug_reset_ssn_message, self.SSN_Network_Address_Mapping[self.SSN_Network_Nodes[node_index]])
         pass
 
     def getNodeCountinNetwork(self):
         return len(self.SSN_Network_Address_Mapping)
-
-
+    pass
