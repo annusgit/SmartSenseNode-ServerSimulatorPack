@@ -19,35 +19,35 @@ SSN_ActivityLevelID_to_Type = {0: 'NORMAL', 1: 'ABNORMAL', 2: 'TREADFAIL', 3: 'T
 offset = 12
 
 
-def construct_set_mac_message(mac_address):
+def construct_set_mac_message(node_id, mac_address):
     mac_address_in_bytes = get_mac_bytes_from_mac_string(mac_address=mac_address)
-    set_mac_message = [SSN_MessageType_to_ID['SET_MAC'], *mac_address_in_bytes]
+    set_mac_message = [*node_id, SSN_MessageType_to_ID['SET_MAC'], *mac_address_in_bytes]
     return bytearray(set_mac_message)
 
 
-def construct_set_timeofday_message(current_time):
-    set_timeofday_message = [SSN_MessageType_to_ID['SET_TIMEOFDAY'], int(current_time.hour), int(current_time.minute), int(current_time.second),
-                             int(current_time.day), int(current_time.month), int(current_time.year - 2000)]
+def construct_set_timeofday_message(node_id, current_time):
+    set_timeofday_message = [*node_id, SSN_MessageType_to_ID['SET_TIMEOFDAY'], int(current_time.hour), int(current_time.minute), int(current_time.second), int(current_time.day),
+                             int(current_time.month), int(current_time.year - 2000)]
     return bytearray(set_timeofday_message)
 
 
-def construct_set_timeofday_Tick_message(current_Tick):
-    set_timeofday_Tick_message = [SSN_MessageType_to_ID['SET_TIMEOFDAY'], current_Tick[0], current_Tick[1], current_Tick[2], current_Tick[3]]
+def construct_set_timeofday_Tick_message(node_id, current_Tick):
+    set_timeofday_Tick_message = [*node_id, SSN_MessageType_to_ID['SET_TIMEOFDAY'], current_Tick[0], current_Tick[1], current_Tick[2], current_Tick[3]]
     return bytearray(set_timeofday_Tick_message)
 
 
-def construct_set_config_message(config):
-    set_config_message = [SSN_MessageType_to_ID['SET_CONFIG'], *config]
+def construct_set_config_message(node_id, config):
+    set_config_message = [*node_id, SSN_MessageType_to_ID['SET_CONFIG'], *config]
     return bytearray(set_config_message)
 
 
-def construct_debug_reset_eeprom_message():
-    debug_reset_eeprom_message = [SSN_MessageType_to_ID['DEBUG_EEPROM_CLEAR']]
+def construct_debug_reset_eeprom_message(node_id):
+    debug_reset_eeprom_message = [*node_id, SSN_MessageType_to_ID['DEBUG_EEPROM_CLEAR']]
     return bytearray(debug_reset_eeprom_message)
 
 
-def construct_debug_reset_ssn_message():
-    debug_reset_ssn_message = [SSN_MessageType_to_ID['DEBUG_RESET_SSN']]
+def construct_debug_reset_ssn_message(node_id):
+    debug_reset_ssn_message = [*node_id, SSN_MessageType_to_ID['DEBUG_RESET_SSN']]
     return bytearray(debug_reset_ssn_message)
 
 

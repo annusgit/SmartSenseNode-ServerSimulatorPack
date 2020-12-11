@@ -168,6 +168,7 @@ class UDP_COMM:
 
     def construct_set_timeofday_Tick_message(self, node_id, current_Tick):
         set_timeofday_Tick_message = [*node_id, SSN_MessageType_to_ID['SET_TIMEOFDAY'], current_Tick[0], current_Tick[1], current_Tick[2], current_Tick[3]]
+        print(set_timeofday_Tick_message)
         return bytearray(set_timeofday_Tick_message)
 
     def send_set_timeofday_Tick_message(self, node_index, current_tick):
@@ -177,6 +178,7 @@ class UDP_COMM:
 
     def construct_set_config_message(self, node_id, config):
         set_config_message = [*node_id, SSN_MessageType_to_ID['SET_CONFIG'], *config]
+        print(set_config_message)
         return bytearray(set_config_message)
 
     def send_set_config_message(self, node_index, config):

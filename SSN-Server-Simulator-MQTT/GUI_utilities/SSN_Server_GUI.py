@@ -239,7 +239,10 @@ class SSN_Server_UI():
             self.configs.append(this_sensor_rating)
             self.configs.append(int(10 * float(self.machine_thresholds[i].get())))
             self.configs.append(int(self.machine_maxloads[i].get()))
+            self.configs.append(0)  # this is the sensor scalar set to 1.00V for the blue current sensors
             pass
+        # append max-min temperature and humidity thresholds
+        self.configs.extend([0, 100, 0, 100])
         self.configs.append(int(self.reportinterval_text_entry.get()))
         if self.use_udp:
             try:
@@ -253,7 +256,7 @@ class SSN_Server_UI():
         elif self.use_mqtt:
             # construct and send set_mac message
             try:
-                self.mqtt_comm.send_set_config_message(config=self.configs)
+                self.mqtt_comm.send_set_config_message(node_index=self.node_select_radio_button.getSelectedNode()-1, config=self.configs)
                 print('\033[34m' + "Sent CONFIG to SSN-{}".format(self.node_select_radio_button.getSelectedNode()))
             except error:
                 print('\033[31m' + f"{error}")
@@ -350,30 +353,31 @@ class SSN_Server_UI():
         return (self.NodeCountInGUI - 1) * vertical_spacing * 14 + 40
 
     def setup_incoming_data_interface(self, NumOfNodes):
+        x_size = 120
         for k in range(NumOfNodes):
             self.NodeCountInGUI += 1
             # received message/status to be displayed
             self.message_type_text.append(SSN_Text_Display_Widget(window=self.root_window, label_text="Incoming Message Type", label_pos=(0, self.GUI_Block() + vertical_spacing*6),
-                                                                  text_size=(110, vertical_spacing), text_pos=(horizontal_spacing+20, self.GUI_Block() + vertical_spacing*6)))
+                                                                  text_size=(x_size, vertical_spacing), text_pos=(horizontal_spacing+20, self.GUI_Block() + vertical_spacing*6)))
             # add a radio-button to chose this one when we have to send the message
             self.node_select_radio_button.add_radio(radio_text="SSN-{}".format(self.NodeCountInGUI), radio_value=self.NodeCountInGUI,
                                                     radio_pos=(2*horizontal_spacing+20, self.GUI_Block() + vertical_spacing*6))
             # SSN Node ID to be displayed
             self.nodeid_text.append(SSN_Text_Display_Widget(window=self.root_window, label_text="Node ID", label_pos=(0, self.GUI_Block() + vertical_spacing * 7),
-                                                            text_size=(110, vertical_spacing), text_pos=(horizontal_spacing + 20, self.GUI_Block() + vertical_spacing * 7)))
+                                                            text_size=(x_size+20, vertical_spacing), text_pos=(horizontal_spacing + 20, self.GUI_Block() + vertical_spacing * 7)))
             # temperature to be displayed
             self.temperature_text.append(SSN_Text_Display_Widget(window=self.root_window, label_text="Temperature ({}C)".format(chr(176)),
-                                                                 label_pos=(0, self.GUI_Block() + vertical_spacing*8), text_size=(110, vertical_spacing),
+                                                                 label_pos=(0, self.GUI_Block() + vertical_spacing*8), text_size=(x_size, vertical_spacing),
                                                                  text_pos=(horizontal_spacing+20, self.GUI_Block() + vertical_spacing*8)))
             # humidity to be displayed
             self.humidity_text.append(SSN_Text_Display_Widget(window=self.root_window, label_text="Relative Humidity (%)", label_pos=(0, self.GUI_Block() + vertical_spacing*9),
-                                                              text_size=(110, vertical_spacing), text_pos=(horizontal_spacing+20, self.GUI_Block() + vertical_spacing*9)))
+                                                              text_size=(x_size, vertical_spacing), text_pos=(horizontal_spacing+20, self.GUI_Block() + vertical_spacing*9)))
             # node uptime to be displayed
             self.nodeuptime_text.append(SSN_Text_Display_Widget(window=self.root_window, label_text="Node Up Time in (sec)", label_pos=(0, self.GUI_Block() + vertical_spacing * 10),
-                                                                text_size=(110, vertical_spacing), text_pos=(horizontal_spacing + 20, self.GUI_Block() + vertical_spacing * 10)))
+                                                                text_size=(x_size, vertical_spacing), text_pos=(horizontal_spacing + 20, self.GUI_Block() + vertical_spacing * 10)))
             # abnormal activity to be displayed
             self.abnormalactivity_text.append(SSN_Text_Display_Widget(window=self.root_window, label_text="Abnormal Activity", label_pos=(0, self.GUI_Block() + vertical_spacing * 11),
-                                                                      text_size=(110, vertical_spacing), text_pos=(horizontal_spacing + 20, self.GUI_Block() + vertical_spacing * 11),
+                                                                      text_size=(x_size, vertical_spacing), text_pos=(horizontal_spacing + 20, self.GUI_Block() + vertical_spacing * 11),
                                                                       color='green'))
 
             for i in range(4):
@@ -431,8 +435,8 @@ class SSN_Server_UI():
         self.read_messages_and_update_UI()
         pass
 
-    def setup_mqtt_communication(self, client_id, host="192.168.0.120"):
-        self.mqtt_comm = MQTT(client_id="SSNSuperUser", host="192.168.0.120")
+    def setup_mqtt_communication(self, client_id, remote_host, remote_port):
+        self.mqtt_comm = MQTT(client_id=client_id, remote_host=remote_host, remote_port=remote_port)
         self.mqtt_comm.client.loop_start()
         self.use_mqtt = True
         # invoke it just once
@@ -487,11 +491,10 @@ class SSN_Server_UI():
             # automate set time of day
             print('\033[34m' + "Sending SET_TIMEOFDAY to SSN-{}".format(node_index+1))
             if self.use_udp:
-                self.udp_comm.send_set_timeofday_Tick_message(node_index=self.node_select_radio_button.getSelectedNode() - 1,
-                                                              current_tick=utils.get_bytes_from_int(self.servertimeofday_Tick))
+                self.udp_comm.send_set_timeofday_Tick_message(node_index=self.node_select_radio_button.getSelectedNode() - 1, current_tick=utils.get_bytes_from_int(self.servertimeofday_Tick))
                 print('\033[34m' + "Sent Time of Day to SSN-{}".format(self.node_select_radio_button.getSelectedNode()))
             elif self.use_mqtt:
-                self.mqtt_comm.send_set_timeofday_Tick_message(current_tick=utils.get_bytes_from_int(self.servertimeofday_Tick))
+                self.mqtt_comm.send_set_timeofday_Tick_message(node_index=node_index, current_tick=utils.get_bytes_from_int(self.servertimeofday_Tick))
         elif message_id == SSN_MessageType_to_ID['GET_CONFIG']:
             print('\033[34m' + "Received GET_CONFIG from SSN-{}".format(node_index+1))
         # configs have been acknowledged?

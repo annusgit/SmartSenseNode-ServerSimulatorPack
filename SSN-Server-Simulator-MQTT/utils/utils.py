@@ -1,14 +1,16 @@
-
 import numpy as np
 import matplotlib.pyplot as plt
 
 
-def get_MAC_id_from_bytes(high_byte, low_byte):
-    return f"{high_byte:02X}:{low_byte:02X}"
+def get_MAC_id_from_bytes(bytes):
+    return bytes[0:6]
+
+
+def get_MAC_id_string_from_bytes(bytes):
+    return f"{bytes[0]:02X}:{bytes[1]:02X}:{bytes[2]:02X}:{bytes[3]:02X}:{bytes[4]:02X}:{bytes[5]:02X}"
 
 
 def get_word_from_bytes(high_byte, low_byte):
-    # print(high_byte, low_byte)
     return (high_byte << 8) | low_byte
 
 

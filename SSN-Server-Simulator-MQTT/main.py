@@ -1,12 +1,10 @@
 from GUI_utilities import SSN_Server_UI
-from MQTT import MQTT
-import time
 
 
-server_end = ('192.168.0.120', 9999)
+server_end = ('115.186.183.129', 36000)
 node_end = ('', 8888)
 CURRENT_SENSOR_RATINGS = ['NONE', 5, 10, 15, 20, 25, 30, 50, 60, 100, 250]
-SSN_DEFAULT_CONFIGS = [9, 90, 10, 9, 95, 6, 6, 27, 2, 6, 28, 3, 1]
+SSN_DEFAULT_CONFIGS = [8, 50, 3, 8, 50, 3, 0, 0, 0, 0, 0, 0, 5]
 
 
 def main():
@@ -16,20 +14,10 @@ def main():
     main_gui.setup_incoming_data_interface(NumOfNodes=2)
     # main_gui.setup_serial_communication(serial_port='COM29', baudrate=19200, log_file='serial_log.txt')
     # main_gui.setup_udp_communication(server_end=server_end)
-    main_gui.setup_mqtt_communication(client_id="SSNSuperUser", host="192.168.0.120")
+    main_gui.setup_mqtt_communication(client_id="SSNBackend", remote_host=server_end[0], remote_port=server_end[1])
     # main_gui.setup_csv_data_recording(csv_file="recording/recording.csv")
     # start the main loop
     main_gui.start()
-    pass
-
-
-def test():
-    mqtt_obj = MQTT(client_id="SSNSuperUser", host="192.168.0.120")
-    mqtt_obj.client.loop_start()
-    while True:
-        print("Waiting for 1 second")
-        time.sleep(1)
-        pass
     pass
 
 
