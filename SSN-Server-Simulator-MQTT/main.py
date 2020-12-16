@@ -1,6 +1,5 @@
 from GUI_utilities import SSN_Server_UI
 
-
 server_end = ('115.186.183.129', 36000)
 node_end = ('', 8888)
 CURRENT_SENSOR_RATINGS = ['NONE', 5, 10, 15, 20, 25, 30, 50, 60, 100, 250]
