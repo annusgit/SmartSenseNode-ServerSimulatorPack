@@ -125,11 +125,13 @@ class MQTT:
         pass
 
     def send_debug_reset_eeprom_message(self, node_index):
+        print(node_index)
         debug_reset_eeprom_message = construct_debug_reset_eeprom_message(node_id=self.SSN_Network_Nodes[node_index])
         self.client.publish(topic=utils.get_MAC_id_string_from_bytes(bytes=self.SSN_Network_Nodes[node_index]), payload=debug_reset_eeprom_message)
         pass
 
     def send_debug_reset_ssn_message(self, node_index):
+        print(node_index)
         debug_reset_ssn_message = construct_debug_reset_ssn_message(node_id=self.SSN_Network_Nodes[node_index])
         self.client.publish(topic=utils.get_MAC_id_string_from_bytes(bytes=self.SSN_Network_Nodes[node_index]), payload=debug_reset_ssn_message)
         pass

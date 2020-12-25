@@ -220,7 +220,7 @@ class SSN_Server_UI():
         elif self.use_mqtt:
             # construct and send set_mac message
             try:
-                self.mqtt_comm.send_set_mac_message(mac_address=self.ssn_mac_dropdown.get())
+                self.mqtt_comm.send_set_mac_message(node_index=self.node_select_radio_button.getSelectedNode() - 1, mac_address=self.ssn_mac_dropdown.get())
                 print('\033[34m' + "Sent MAC to SSN-{}".format(self.node_select_radio_button.getSelectedNode()))
             except error:
                 print('\033[31m' + f"{error}")
@@ -239,7 +239,7 @@ class SSN_Server_UI():
             self.configs.append(this_sensor_rating)
             self.configs.append(int(10 * float(self.machine_thresholds[i].get())))
             self.configs.append(int(self.machine_maxloads[i].get()))
-            self.configs.append(0)  # this is the sensor scalar set to 1.00V for the blue current sensors
+            self.configs.append(1)  # this is the sensor scalar set to 1.00V for the blue current sensors
             pass
         # append max-min temperature and humidity thresholds
         self.configs.extend([0, 100, 0, 100])
@@ -299,7 +299,7 @@ class SSN_Server_UI():
         elif self.use_mqtt:
             # construct and send set_mac message
             try:
-                self.mqtt_comm.send_debug_reset_eeprom_message()
+                self.mqtt_comm.send_debug_reset_eeprom_message(node_index=self.node_select_radio_button.getSelectedNode() - 1)
                 print('\033[34m' + "Sent CLEAR EEPROM to SSN-{}".format(self.node_select_radio_button.getSelectedNode()))
             except error:
                 print('\033[31m' + f"{error}")
@@ -321,7 +321,7 @@ class SSN_Server_UI():
         elif self.use_mqtt:
             # construct and send set_mac message
             try:
-                self.mqtt_comm.send_debug_reset_ssn_message()
+                self.mqtt_comm.send_debug_reset_ssn_message(node_index=self.node_select_radio_button.getSelectedNode() - 1)
                 print('\033[34m' + "Sent RESET to SSN-{}".format(self.node_select_radio_button.getSelectedNode()))
             except error:
                 print('\033[31m' + f"{error}")
