@@ -9,7 +9,7 @@ class MQTT:
     StatusUpdatesChannel = "StatusUpdates"
 
     def __init__(self, client_id, remote_host, remote_port, keep_alive=60):
-        self.client = mqtt.Client(client_id=client_id)
+        self.client = mqtt.Client(client_id=client_id, clean_session=False)
         self.client.on_connect = self.on_connect
         self.client.on_message = self.on_message
         self.remote_host, self.remote_port, self.keep_alive = remote_host, remote_port, keep_alive
@@ -26,8 +26,8 @@ class MQTT:
         # Subscribing in on_connect() means that if we lose the connection and
         # reconnect then subscriptions will be renewed.
         # this is our status update channel for all nodes
-        client.subscribe(self.GetterChannel)
-        client.subscribe(self.StatusUpdatesChannel)
+        client.subscribe(self.GetterChannel, 1)
+        client.subscribe(self.StatusUpdatesChannel, 1)
         pass
 
     # The callback for when a PUBLISH message is received from the server.
@@ -106,34 +106,34 @@ class MQTT:
 
     def send_set_mac_message(self, node_index, mac_address):
         set_mac_message = construct_set_mac_message(node_id=self.SSN_Network_Nodes[node_index], mac_address=mac_address)
-        self.client.publish(topic=utils.get_MAC_id_string_from_bytes(bytes=self.SSN_Network_Nodes[node_index]), payload=set_mac_message)
+        self.client.publish(topic=utils.get_MAC_id_string_from_bytes(bytes=self.SSN_Network_Nodes[node_index]), payload=set_mac_message, qos=1)
         pass
 
     def send_set_timeofday_message(self, node_index, current_time):
         set_timeofday_message = construct_set_timeofday_message(node_id=self.SSN_Network_Nodes[node_index], current_time=current_time)
-        self.client.publish(topic=utils.get_MAC_id_string_from_bytes(bytes=self.SSN_Network_Nodes[node_index]), payload=set_timeofday_message)
+        self.client.publish(topic=utils.get_MAC_id_string_from_bytes(bytes=self.SSN_Network_Nodes[node_index]), payload=set_timeofday_message, qos=1)
         pass
 
     def send_set_timeofday_Tick_message(self, node_index, current_tick):
         set_timeofday_message = construct_set_timeofday_Tick_message(node_id=self.SSN_Network_Nodes[node_index], current_Tick=current_tick)
-        self.client.publish(topic=utils.get_MAC_id_string_from_bytes(bytes=self.SSN_Network_Nodes[node_index]), payload=set_timeofday_message)
+        self.client.publish(topic=utils.get_MAC_id_string_from_bytes(bytes=self.SSN_Network_Nodes[node_index]), payload=set_timeofday_message, qos=1)
         pass
 
     def send_set_config_message(self, node_index, config):
         set_config_message = construct_set_config_message(node_id=self.SSN_Network_Nodes[node_index], config=config)
-        self.client.publish(topic=utils.get_MAC_id_string_from_bytes(bytes=self.SSN_Network_Nodes[node_index]), payload=set_config_message)
+        self.client.publish(topic=utils.get_MAC_id_string_from_bytes(bytes=self.SSN_Network_Nodes[node_index]), payload=set_config_message, qos=1)
         pass
 
     def send_debug_reset_eeprom_message(self, node_index):
         print(node_index)
         debug_reset_eeprom_message = construct_debug_reset_eeprom_message(node_id=self.SSN_Network_Nodes[node_index])
-        self.client.publish(topic=utils.get_MAC_id_string_from_bytes(bytes=self.SSN_Network_Nodes[node_index]), payload=debug_reset_eeprom_message)
+        self.client.publish(topic=utils.get_MAC_id_string_from_bytes(bytes=self.SSN_Network_Nodes[node_index]), payload=debug_reset_eeprom_message, qos=1)
         pass
 
     def send_debug_reset_ssn_message(self, node_index):
         print(node_index)
         debug_reset_ssn_message = construct_debug_reset_ssn_message(node_id=self.SSN_Network_Nodes[node_index])
-        self.client.publish(topic=utils.get_MAC_id_string_from_bytes(bytes=self.SSN_Network_Nodes[node_index]), payload=debug_reset_ssn_message)
+        self.client.publish(topic=utils.get_MAC_id_string_from_bytes(bytes=self.SSN_Network_Nodes[node_index]), payload=debug_reset_ssn_message, qos=1)
         pass
 
     pass

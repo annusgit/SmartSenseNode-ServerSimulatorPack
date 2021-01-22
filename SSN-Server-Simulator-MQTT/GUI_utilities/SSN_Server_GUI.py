@@ -239,7 +239,7 @@ class SSN_Server_UI():
             self.configs.append(this_sensor_rating)
             self.configs.append(int(10 * float(self.machine_thresholds[i].get())))
             self.configs.append(int(self.machine_maxloads[i].get()))
-            self.configs.append(1)  # this is the sensor scalar set to 1.00V for the blue current sensors
+            self.configs.append(1)  # this is the sensor scalar set to 1 for the big 0.333V output current sensors
             pass
         # append max-min temperature and humidity thresholds
         self.configs.extend([0, 100, 0, 100])
