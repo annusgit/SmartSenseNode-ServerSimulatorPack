@@ -83,8 +83,12 @@ class MQTT:
         # Status update is received?
         elif node_message_id == SSN_MessageType_to_ID['STATUS_UPDATE']:
             # get node specific information
-            temperature = utils.get_word_from_bytes(high_byte=node_message[7], low_byte=node_message[8]) / 10.0
-            humidity = utils.get_word_from_bytes(high_byte=node_message[9], low_byte=node_message[10]) / 10.0
+            # ambient temperature sensor
+            # temperature = round(utils.get_word_from_bytes(high_byte=node_message[7], low_byte=node_message[8]) / 10.0, 2)
+            # object temperature sensor
+            temperature = round(utils.get_word_from_bytes(high_byte=node_message[8], low_byte=node_message[7]) * 0.02 - 273.15, 2)
+            # object temperature sensor
+            humidity = round(utils.get_word_from_bytes(high_byte=node_message[9], low_byte=node_message[10]) / 10.0, 2)
             state_flags = node_message[11]
             ssn_uptime = utils.get_int_from_bytes(highest_byte=node_message[60], higher_byte=node_message[61], high_byte=node_message[62], low_byte=node_message[63])
             abnormal_activity = node_message[64]
@@ -137,3 +141,46 @@ class MQTT:
         pass
 
     pass
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

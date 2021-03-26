@@ -239,10 +239,10 @@ class SSN_Server_UI():
             self.configs.append(this_sensor_rating)
             self.configs.append(int(10 * float(self.machine_thresholds[i].get())))
             self.configs.append(int(self.machine_maxloads[i].get()))
-            self.configs.append(1)  # this is the sensor scalar set to 1 for the big 0.333V output current sensors
+            self.configs.append(0)  # this is the sensor scalar set to 1 for the big 0.333V output current sensors
             pass
-        # append max-min temperature and humidity thresholds
-        self.configs.extend([0, 100, 0, 100])
+        # append min-max temperature and humidity thresholds
+        self.configs.extend([75, 95, 0, 100])
         self.configs.append(int(self.reportinterval_text_entry.get()))
         if self.use_udp:
             try:
