@@ -37,6 +37,8 @@ class MQTT:
         message_id, params = self.decipher_node_message(in_message.payload)
         node_MAC_id = params[0]
         params[0] = utils.get_MAC_id_string_from_bytes(bytes=node_MAC_id)
+        # x = ['70:B3:D5:FE:4D:7A', '70:B3:D5:FE:4C:E1']
+        # if params[0] in x:
         if node_MAC_id not in self.SSN_Network_Nodes:
             self.SSN_Network_Nodes.append(node_MAC_id)
             print('\033[32m' + "Added a new SSN into the network.")
@@ -84,9 +86,9 @@ class MQTT:
         elif node_message_id == SSN_MessageType_to_ID['STATUS_UPDATE']:
             # get node specific information
             # ambient temperature sensor
-            # temperature = round(utils.get_word_from_bytes(high_byte=node_message[7], low_byte=node_message[8]) / 10.0, 2)
+            temperature = round(utils.get_word_from_bytes(high_byte=node_message[7], low_byte=node_message[8]) / 10.0, 2)
             # object temperature sensor
-            temperature = round(utils.get_word_from_bytes(high_byte=node_message[8], low_byte=node_message[7]) * 0.02 - 273.15, 2)
+            # temperature = round(utils.get_word_from_bytes(high_byte=node_message[8], low_byte=node_message[7]) * 0.02 - 273.15, 2)
             # object temperature sensor
             humidity = round(utils.get_word_from_bytes(high_byte=node_message[9], low_byte=node_message[10]) / 10.0, 2)
             state_flags = node_message[11]
