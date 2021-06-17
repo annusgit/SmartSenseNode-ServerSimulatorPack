@@ -11,7 +11,8 @@ SSN_MessageType_to_ID = {
     'STATUS_UPDATE':         8,
     'RESET_MACHINE_TIME':    9,
     'DEBUG_EEPROM_CLEAR':   10,
-    'DEBUG_RESET_SSN':      11
+    'DEBUG_RESET_SSN':      11,
+    'RETRIEVE_SSN_CONFIG':  12,
 }
 
 SSN_MessageID_to_Type = {x:y for y,x in SSN_MessageType_to_ID.items()}
@@ -49,6 +50,10 @@ def construct_debug_reset_eeprom_message(node_id):
 def construct_debug_reset_ssn_message(node_id):
     debug_reset_ssn_message = [*node_id, SSN_MessageType_to_ID['DEBUG_RESET_SSN']]
     return bytearray(debug_reset_ssn_message)
+
+def construct_retrieve_ssn_config_message(node_id):
+    retrieve_ssn_config_message = [*node_id, SSN_MessageType_to_ID['RETRIEVE_SSN_CONFIG']]
+    return bytearray(retrieve_ssn_config_message)
 
 
 

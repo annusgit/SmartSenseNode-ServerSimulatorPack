@@ -239,10 +239,10 @@ class SSN_Server_UI():
             self.configs.append(this_sensor_rating)
             self.configs.append(int(10 * float(self.machine_thresholds[i].get())))
             self.configs.append(int(self.machine_maxloads[i].get()))
-            self.configs.append(0)  # this is the sensor scalar set to 1 for the big 0.333V output current sensors
+            self.configs.append(2)  # this is the sensor scalar set to 1 for the big 0.333V output current sensors and 2 to set the scalar as 1.65
             pass
         # append min-max temperature and humidity thresholds
-        self.configs.extend([75, 95, 0, 100])
+        self.configs.extend([0, 100, 0, 100])
         self.configs.append(int(self.reportinterval_text_entry.get()))
         if self.use_udp:
             try:
@@ -329,6 +329,28 @@ class SSN_Server_UI():
             pass
         pass
 
+    def retrieve_ssn_config_btn_clicked(self):
+        # clear node status panel
+        self.clear_status_panel()
+        if self.use_udp:
+            # send message and clear statuss
+            try:
+                self.udp_comm.send_retrieve_ssn_config_message(node_index=self.node_select_radio_button.getSelectedNode() - 1)
+                print('\033[34m' + "Sent RESET to SSN-{}".format(self.node_select_radio_button.getSelectedNode()))
+            except IndexError:
+                print('\033[31m' + "SSN Network Node Count: {}. Can't Send to SSN Indexed: {}".format(self.udp_comm.getNodeCountinNetwork(),
+                                                                                                      self.node_select_radio_button.getSelectedNode() - 1))
+        elif self.use_mqtt:
+            # construct and send set_mac message
+            try:
+                self.mqtt_comm.send_retrieve_ssn_config_message(node_index=self.node_select_radio_button.getSelectedNode() - 1)
+                print('\033[34m' + "Sent RETRIEVE CONFIGURATIONS to SSN-{}".format(self.node_select_radio_button.getSelectedNode()))
+            except error:
+                print('\033[31m' + f"{error}")
+                pass
+            pass
+        pass
+
     def setup_buttons(self):
         # update mac button
         self.mac_button = SSN_Button_Widget(window=self.root_window, button_text="Send MAC Address", button_command=self.send_mac_btn_clicked,
@@ -347,6 +369,8 @@ class SSN_Server_UI():
                                                         button_pos=(5 * horizontal_spacing + 64, vertical_spacing * 9 + 5))
         self.clear_status_panel_button = SSN_Button_Widget(window=self.root_window, button_text="Clear Status Panel", button_command=self.clear_status_panel,
                                                         button_pos=(5 * horizontal_spacing + 69, vertical_spacing * 10 + 22))
+        self.retrieve_ssn_config_btn_clicked = SSN_Button_Widget(window=self.root_window, button_text="RETRIEVE CONFIGS", button_command=self.retrieve_ssn_config_btn_clicked,
+                                                        button_pos=(5 * horizontal_spacing + 67, vertical_spacing * 11 + 38))
         pass
 
     def GUI_Block(self):
@@ -511,6 +535,7 @@ class SSN_Server_UI():
             self.temperature_text[node_index].update(new_text_string=params[1])
             self.humidity_text[node_index].update(new_text_string=params[2])
             self.nodeuptime_text[node_index].update(new_text_string=self.servertimeofday_Tick-params[3])  # get the difference of static tick and current tick
+            print(params[4])
             activity_level = SSN_ActivityLevelID_to_Type[params[4]]
             # get activity level of the SSN and display properly
             self.abnormalactivity_text[node_index].update(new_text_string=activity_level)

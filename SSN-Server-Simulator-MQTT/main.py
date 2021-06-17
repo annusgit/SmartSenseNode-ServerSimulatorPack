@@ -1,8 +1,8 @@
 from GUI_utilities import SSN_Server_UI
 
 # server_end = ('115.186.183.129', 36000)
-server_end = ('34.87.92.5', 1883)
-# server_end = ('192.168.0.120', 1883)
+# server_end = ('34.87.92.5', 1883)
+server_end = ('192.168.0.110', 1883)
 node_end = ('', 8888)
 CURRENT_SENSOR_RATINGS = ['NONE', 5, 10, 15, 20, 25, 30, 50, 60, 100, 250]
 SSN_DEFAULT_CONFIGS = [8, 50, 3, 8, 50, 3, 0, 0, 0, 0, 0, 0, 5]
